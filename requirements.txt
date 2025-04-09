@@ -7,4 +7,3 @@ matplotlib
 seaborn
 beautifulsoup4
 numpy
-base64
