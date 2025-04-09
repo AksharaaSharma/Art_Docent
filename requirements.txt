@@ -1,7 +1,10 @@
 streamlit
 requests
 google-generativeai
-beautifulsoup4
-numpy
+pillow
+pandas
 matplotlib
 seaborn
+beautifulsoup4
+numpy
+base64
