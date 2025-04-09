@@ -1,1 +1,7 @@
-
+streamlit
+requests
+google-generativeai
+beautifulsoup4
+numpy
+matplotlib
+base64
