@@ -8,6 +8,7 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![Gemini AI](https://img.shields.io/badge/Powered%20by-Gemini%20AI-purple.svg)](https://gemini.google.com/)
 
+Prototype Link: https://genta-prototype-by-akshara.streamlit.app/
 ---
 
 </div>
