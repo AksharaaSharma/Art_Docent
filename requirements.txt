@@ -7,6 +7,5 @@ matplotlib
 seaborn
 beautifulsoup4
 numpy
-traceback
 moviepy
 tempfile
