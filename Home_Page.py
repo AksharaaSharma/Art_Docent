@@ -3,7 +3,6 @@ import requests
 import google.generativeai as genai
 import os
 import io
-from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -17,6 +16,14 @@ import logging
 import numpy as np
 import matplotlib.patches as mpatches
 import base64
+from Frontend import frontend
+import tempfile
+import moviepy as mp
+from moviepy import TextClip, ImageClip, CompositeVideoClip, concatenate_videoclips
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont
+import traceback
+from moviepy.video.fx import *
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,444 +37,419 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-    /* Global Font Settings */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
-    
-    html, body, [class*="st-"] {
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    /* Main Header - Artistic Style */
-    .main-header {
-        font-family: 'Playfair Display', serif;
-        font-size: 3.5rem !important;
-        font-weight: 700 !important;
-        background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 2rem auto 1.5rem auto !important;
-        text-align: center !important;
-        letter-spacing: 0.05em;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        position: relative;
-    }
-    
-    .main-header::after {
-        content: "";
-        display: block;
-        width: 80px;
-        height: 3px;
-        background: linear-gradient(90deg, #3B82F6, #1E3A8A);
-        margin: 0.5rem auto 0 auto;
-        border-radius: 2px;
-    }
-    
-    /* Sub-header - Elegant Style */
-    .sub-header {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.7rem !important;
-        font-weight: 500 !important;
-        color: #4B5563 !important;
-        margin-bottom: 2.5rem !important;
-        text-align: center !important;
-        font-style: italic;
-        opacity: 0.85;
-    }
-    
-    /* Info Box - Refined Design */
-    .info-box {
-        background: linear-gradient(145deg, #F9FAFB, #F3F4F6);
-        border-radius: 16px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.05), 
-                   -5px -5px 15px rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.7);
-    }
-    
-    /* Result Header - Artistic Style */
-    .result-header {
-        font-family: 'Playfair Display', serif;
-        font-size: 2rem !important;
-        font-weight: 600 !important;
-        background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 80%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 2rem 0 1.5rem 0 !important;
-        position: relative;
-        padding-bottom: 0.5rem;
-    }
-    
-    .result-header::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 60px;
-        height: 2px;
-        background: linear-gradient(90deg, #3B82F6, transparent);
-    }
-    
-    /* Insight Box - Creative Style */
-    .insight-box {
-        background: linear-gradient(to right, #EFF6FF 0%, #F9FAFB 100%);
-        border-left: 5px solid #3B82F6;
-        padding: 20px;
-        margin: 15px 0;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .insight-box::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent);
-        border-radius: 0 0 0 60px;
-    }
-    
-    /* Classification Box - Artistic Style */
-    .classification-box {
-        background: linear-gradient(to right, #ECFDF5 0%, #F0FDF9 100%);
-        border-left: 5px solid #10B981;
-        padding: 20px;
-        margin: 20px 0;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 1.3rem;
-        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.1);
-        position: relative;
-    }
-    
-    .classification-box::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 100px;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5));
-    }
-    
-    /* Analysis Section - Refined Style */
-    .analysis-section {
-        margin: 30px 0;
-        border-bottom: 1px solid rgba(229, 231, 235, 0.7);
-        padding-bottom: 25px;
-        position: relative;
-    }
-    
-    .analysis-section::before {
-        content: "";
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        width: 100px;
-        height: 3px;
-        background: linear-gradient(90deg, #1E3A8A, transparent);
-        border-radius: 3px;
-    }
-    
-    /* Analysis Title - Elegant Style */
-    .analysis-title {
-        font-family: 'Playfair Display', serif;
-        color: #1E3A8A;
-        font-weight: 600;
-        font-size: 1.5rem;
-        margin-bottom: 15px;
-        position: relative;
-        display: inline-block;
-    }
-    
-    .analysis-title::after {
-        content: "";
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 100%;
-        height: 1px;
-        background: linear-gradient(90deg, #3B82F6, transparent);
-    }
-    
-    /* Visualization Container - Artistic Style */
-    .visualization-container {
-        background: linear-gradient(145deg, #FFFFFF, #F9FAFB);
-        padding: 30px;
-        border-radius: 16px;
-        margin: 30px 0;
-        box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.05), 
-                   -8px -8px 16px rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-    }
-    
-    /* Beautiful Horizontal Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background: linear-gradient(145deg, #F9FAFB, #F3F4F6);
-        padding: 10px 15px 0px 15px;
-        border-radius: 12px 12px 0 0;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        border-bottom: none;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        border-radius: 10px 10px 0 0;
-        background: transparent;
-        padding: 0px 20px;
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
-        color: #4B5563;
-        border: 1px solid transparent;
-        border-bottom: none;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]::before {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, #3B82F6, #1E3A8A);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover::before {
-        transform: scaleX(0.8);
-    }
-    
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
-        border-color: rgba(230, 232, 236, 0.5);
-        color: #1E3A8A;
-        font-weight: 600;
-        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.02);
-    }
-    
-    .stTabs [data-baseweb="tab"][aria-selected="true"]::before {
-        transform: scaleX(1);
-        height: 3px;
-    }
-    
-    .stTabs [data-baseweb="tab-panel"] {
-        background: white;
-        border-radius: 0 0 12px 12px;
-        padding: 20px;
-        border: 1px solid rgba(230, 232, 236, 0.5);
-        border-top: none;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-    }
-    
-    /* Button Styling */
-    .stButton button {
-        background: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
-        color: white;
-        border-radius: 8px;
-        padding: 10px 25px;
-        font-weight: 500;
-        border: none;
-        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
-    }
-    
-    .stButton button:active {
-        transform: translateY(1px);
-        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-    }
-    
-    /* Input Field Styling */
-    .stTextInput input, .stTextArea textarea, .stNumberInput input {
-        border-radius: 8px;
-        border: 1px solid rgba(203, 213, 225, 0.8);
-        padding: 10px 15px;
-        transition: all 0.3s ease;
-        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.02);
-    }
-    
-    .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
-        border-color: #3B82F6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-    
-    /* Select Box Styling */
-    .stSelectbox [data-baseweb="select"] {
-        border-radius: 8px;
-    }
-    
-    .stSelectbox [data-baseweb="select"]:focus-within {
-        border-color: #3B82F6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-    
-    /* Checkboxes and Radio Buttons */
-    .stCheckbox [data-baseweb="checkbox"], .stRadio [data-baseweb="radio"] {
-        margin-bottom: 10px;
-    }
-    
-    /* Panel Styling for Cards */
-    .css-card {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-        border: 1px solid rgba(230, 232, 236, 0.5);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .css-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Progress Bar */
-    .stProgress > div > div {
-        background-color: #3B82F6;
-        background-image: linear-gradient(45deg, 
-                                        #3B82F6 25%, 
-                                        #60A5FA 25%, 
-                                        #60A5FA 50%, 
-                                        #3B82F6 50%, 
-                                        #3B82F6 75%, 
-                                        #60A5FA 75%, 
-                                        #60A5FA);
-        background-size: 20px 20px;
-        animation: progress-animation 2s linear infinite;
-    }
-    
-    @keyframes progress-animation {
-        0% {
-            background-position: 0 0;
-        }
-        100% {
-            background-position: 40px 0;
-        }
-    }
-    
-    /* Slider */
-    .stSlider [data-baseweb="slider"] {
-        height: 6px;
-    }
-    
-    .stSlider [data-baseweb="slider"] [data-testid="stThumbValue"] {
-        background: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
-        border: 2px solid white;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Scrollbar styling */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #F1F5F9;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #3B82F6, #1E3A8A);
-        border-radius: 10px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #2563EB, #1E40AF);
-    }
-    
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
-        color: #1E3A8A;
-        background: linear-gradient(90deg, rgba(239, 246, 255, 0.8), transparent);
-        border-radius: 8px;
-        padding-left: 10px !important;
-    }
-    
-    /* Metrics styling */
-    [data-testid="stMetricValue"] {
-        font-size: 2rem !important;
-        font-weight: 600 !important;
-        color: #1E3A8A !important;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        font-size: 1rem !important;
-    }
-    
-    /* Dataframe / Table styling */
-    .stDataFrame {
-        border: none !important;
-    }
-    
-    .stDataFrame [data-testid="stTable"] {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stDataFrame thead tr {
-        background: linear-gradient(90deg, #EFF6FF, #F9FAFB) !important;
-        color: #1E3A8A !important;
-    }
-    
-    .stDataFrame thead th {
-        padding: 12px 24px !important;
-        border-bottom: 2px solid #E5E7EB !important;
-        font-weight: 600 !important;
-    }
-    
-    .stDataFrame tbody tr:nth-child(even) {
-        background-color: #F9FAFB !important;
-    }
-    
-    .stDataFrame tbody tr:hover {
-        background-color: #EFF6FF !important;
-    }
-    
-    .stDataFrame tbody td {
-        padding: 10px 24px !important;
-        border-bottom: 1px solid #E5E7EB !important;
-    }
-    
-    /* App background and content container */
-    .reportview-container {
-        background: linear-gradient(135deg, rgba(249, 250, 251, 0.5) 0%, rgba(243, 244, 246, 0.5) 100%);
-    }
-    
-    .main .block-container {
-        padding: 2rem 3rem;
-        max-width: 1200px;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-    }
-</style>
-""", unsafe_allow_html=True)
+frontend()
 
 # Gemini API Key
 GEMINI_API_KEY = "AIzaSyDVh44jf0dulFB1qP8FwnrHb92DY9gBfdU"  # Replace with your API key
 genai.configure(api_key=GEMINI_API_KEY)
+
+def generate_art_video(image_data, analysis, artwork_type, artist, title):
+    try:
+        # Create a temporary directory to store our assets
+        temp_dir = tempfile.mkdtemp()
+        
+        # Create the original image file
+        img = Image.open(io.BytesIO(image_data))
+        img = img.convert('RGB')
+        img_path = os.path.join(temp_dir, "artwork.jpg")
+        img.save(img_path)
+        
+        # Extract key sections from the analysis using Gemini
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = f"""
+        From the following art analysis, extract 5 key points that would be interesting to highlight in a video. 
+        Each point should be 1-2 sentences long.
+        
+        Format as a JSON array of strings:
+        ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"]
+        
+        Analysis: {analysis}
+        """
+        
+        try:
+            response = model.generate_content(prompt)
+            json_match = re.search(r"\[.*\]", response.text, re.DOTALL)
+            if json_match:
+                key_points = json.loads(json_match.group(0))
+            else:
+                # Fallback points
+                key_points = [
+                    f"This {artwork_type} showcases remarkable artistic technique.",
+                    f"The composition draws the viewer's eye to key focal points.",
+                    "The color palette creates a distinct emotional atmosphere.",
+                    "Notice the unique brushwork and texturing techniques.",
+                    "Historical context adds deeper meaning to this piece."
+                ]
+        except Exception as e:
+            st.error(f"Error extracting key points: {e}")
+            key_points = [
+                f"This {artwork_type} showcases remarkable artistic technique.",
+                f"The composition draws the viewer's eye to key focal points.",
+                "The color palette creates a distinct emotional atmosphere.",
+                "Notice the unique brushwork and texturing techniques.",
+                "Historical context adds deeper meaning to this piece."
+            ]
+        
+        # Generate artistic variations of the image
+        variations = generate_image_variations(img, temp_dir)
+        
+        # Create intro image with text instead of TextClip
+        intro_text = f"Exploring\n{title if title != 'Unknown' else 'This Artwork'}"
+        artist_text = f"By {artist}" if artist != "Unknown" else f"A fascinating {artwork_type}"
+        
+        # Create intro image
+        intro_image_path = create_text_image(intro_text, (1080, 1080), 70, temp_dir, "intro.png")
+        intro_clip = ImageClip(intro_image_path, duration=3)
+        
+        # Create artist image
+        artist_image_path = create_text_image(artist_text, (1080, 1080), 70, temp_dir, "artist.png")
+        artist_clip = ImageClip(artist_image_path, duration=3)
+        
+        # Create the main artwork clip with zooming effect
+        artwork_clip = ImageClip(img_path, duration=5)
+        
+        # If the image is wider than 1080, we'll need to pan across it
+        if artwork_clip.w > 1080:
+            # Create a panning effect from left to right
+            def pan(t):
+                max_pan = max(0, artwork_clip.w - 1080)
+                return ('center', 'center', min(max_pan, max_pan * t / 5))
+            
+            artwork_clip = artwork_clip.with_position(pan)
+        else:
+            # Center the image and add a zoom effect
+            artwork_clip = artwork_clip.with_position('center')
+            
+
+        
+        # Create clips for each key point
+        point_clips = []
+        for i, point in enumerate(key_points):
+            # Use a different variation for each point
+            var_idx = i % len(variations)
+            var_img_path = variations[var_idx]
+            
+            # Create a clip with the image and text overlay
+            img_with_text_path = add_text_to_image(var_img_path, point, temp_dir, f"point_{i}.png")
+            
+            point_clip = ImageClip(img_with_text_path, duration=5)
+            
+            point_clips.append(point_clip)
+        
+        # Create outro image with text
+        outro_text = "DeepBrush AI Art Analysis"
+        outro_image_path = create_text_image(outro_text, (1080, 1080), 70, temp_dir, "outro.png")
+        outro_clip = ImageClip(outro_image_path, duration=3)
+        
+        # Combine all clips
+        all_clips = [intro_clip, artist_clip, artwork_clip] + point_clips + [outro_clip]
+        final_clip = concatenate_videoclips(all_clips, method="compose")
+        
+        # Add background music (would normally use royalty-free music)
+        # For demo purposes, we'll use a silent audio track
+        final_clip = final_clip.without_audio()
+        
+        # Write the video file
+        output_path = os.path.join(temp_dir, "art_journey.mp4")
+        final_clip.write_videofile(output_path, fps=24, codec='libx264', 
+                                audio_codec='aac', preset='medium')
+        
+        return output_path
+    
+    except Exception as e:
+        # Capture the full traceback
+        error_traceback = traceback.format_exc()
+        # Print it to console
+        print(f"Full error traceback:\n{error_traceback}")
+        # You can also return it or store it
+        return f"Error generating video: {str(e)}\n\nFull traceback:\n{error_traceback}"
+
+def resize_array(array, new_size):
+    
+    # Convert numpy array to PIL Image
+    img = Image.fromarray(array.astype('uint8'))
+    
+    # Resize the image
+    resized_img = img.resize((new_size[0], new_size[1]), Image.LANCZOS)
+    
+    # Convert back to numpy array
+    return np.array(resized_img)
+
+# Function to create an image with text
+def create_text_image(text, size, font_size, temp_dir, filename):
+    # Create a new image with dark background
+    width, height = size
+    image = Image.new('RGB', (width, height), (33, 33, 33))
+    draw = ImageDraw.Draw(image)
+    
+    # Try to load a font, fall back to default if not available
+    try:
+        font = ImageFont.truetype("Arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()
+    
+    # Calculate text position to center it
+    lines = text.split('\n')
+    text_height = 0
+    line_heights = []
+    
+    for line in lines:
+        left, top, right, bottom = draw.textbbox((0, 0), line, font=font)
+        line_height = bottom - top
+        text_height += line_height
+        line_heights.append(line_height)
+    
+    y = (height - text_height) // 2
+    
+    # Draw each line centered
+    for i, line in enumerate(lines):
+        left, top, right, bottom = draw.textbbox((0, 0), line, font=font)
+        line_width = right - left
+        x = (width - line_width) // 2
+        draw.text((x, y), line, font=font, fill="white")
+        y += line_heights[i]
+    
+    # Save the image
+    output_path = os.path.join(temp_dir, filename)
+    image.save(output_path)
+    
+    return output_path
+
+# Function to add text to an existing image
+def add_text_to_image(image_path, text, temp_dir, filename):
+    # Load the image
+    img = Image.open(image_path)
+    
+    # Resize to ensure height is 1080
+    img = img.convert('RGB')
+    img = resize_image_to_height(img, 1080)
+    
+    # Center and crop if necessary
+    if img.width > 1080:
+        left = (img.width - 1080) // 2
+        img = img.crop((left, 0, left + 1080, 1080))
+    
+    # Create a semi-transparent overlay for text background
+    overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    
+    # Try to load a font, fall back to default if not available
+    try:
+        font = ImageFont.truetype("Arial.ttf", 40)
+    except IOError:
+        font = ImageFont.load_default()
+    
+    # Calculate text dimensions for proper wrapping
+    max_width = 900
+    wrapped_text = wrap_text(text, font, max_width)
+    
+    # Get text dimensions
+    left, top, right, bottom = draw.multiline_textbbox((0, 0), wrapped_text, font=font)
+    text_width = right - left
+    text_height = bottom - top
+    
+    # Create background rectangle at bottom
+    margin = 20
+    rect_height = text_height + (margin * 2)
+    rect_width = min(text_width + (margin * 2), img.width)
+    rect_x = (img.width - rect_width) // 2
+    rect_y = img.height - rect_height - margin
+    
+    # Draw semi-transparent background
+    draw.rectangle(
+        [rect_x, rect_y, rect_x + rect_width, rect_y + rect_height],
+        fill=(0, 0, 0, 180)  # Black with 70% opacity
+    )
+    
+    # Position text
+    text_x = (img.width - text_width) // 2
+    text_y = rect_y + margin
+    
+    # Draw text
+    draw.multiline_text((text_x, text_y), wrapped_text, font=font, fill=(255, 255, 255, 255))
+    
+    # Composite the overlay with the original image
+    img = img.convert('RGBA')
+    result = Image.alpha_composite(img, overlay)
+    result = result.convert('RGB')  # Convert back to RGB for saving
+    
+    # Save the image
+    output_path = os.path.join(temp_dir, filename)
+    result.save(output_path)
+    
+    return output_path
+
+# Helper function to resize image to a specific height
+def resize_image_to_height(image, target_height):
+    width, height = image.size
+    ratio = target_height / height
+    new_width = int(width * ratio)
+    return image.resize((new_width, target_height), Image.LANCZOS)
+
+# Helper function to wrap text
+def wrap_text(text, font, max_width):
+    """Wrap text to fit within the specified width."""
+    words = text.split()
+    wrapped_lines = []
+    current_line = []
+    
+    for word in words:
+        # Add the word to the current line
+        current_line.append(word)
+        # Check if the line is now too wide
+        line = ' '.join(current_line)
+        left, top, right, bottom = ImageDraw.Draw(Image.new('RGB', (1, 1))).textbbox((0, 0), line, font=font)
+        line_width = right - left
+        
+        if line_width > max_width:
+            # Remove the last word
+            current_line.pop()
+            # Add the current line to wrapped lines
+            if current_line:
+                wrapped_lines.append(' '.join(current_line))
+            # Start a new line with the word that didn't fit
+            current_line = [word]
+    
+    # Add the last line
+    if current_line:
+        wrapped_lines.append(' '.join(current_line))
+    
+    return '\n'.join(wrapped_lines)
+
+# Function to generate artistic variations of the image (unchanged)
+def generate_image_variations(img, temp_dir):
+    variations = []
+    
+    # Variation 1: High contrast
+    var1 = img.copy()
+    enhancer = ImageEnhance.Contrast(var1)
+    var1 = enhancer.enhance(1.5)
+    var1 = var1.convert('RGB')
+    var1_path = os.path.join(temp_dir, "var1.jpg")
+    var1.save(var1_path)
+    variations.append(var1_path)
+    
+    # Variation 2: Black and white
+    var2 = img.copy().convert('L').convert('RGB')
+    var2_path = os.path.join(temp_dir, "var2.jpg")
+    var2.save(var2_path)
+    variations.append(var2_path)
+    
+    # Variation 3: Focus on details (crop center and zoom)
+    var3 = img.copy()
+    width, height = var3.size
+    crop_size = min(width, height) * 0.6
+    left = (width - crop_size) / 2
+    top = (height - crop_size) / 2
+    right = (width + crop_size) / 2
+    bottom = (height + crop_size) / 2
+    var3 = var3.crop((left, top, right, bottom))
+    var3 = var3.resize(img.size, Image.LANCZOS)
+    var3 = var3.convert('RGB')
+    var3_path = os.path.join(temp_dir, "var3.jpg")
+    var3.save(var3_path)
+    variations.append(var3_path)
+    
+    # Variation 4: Artistic filter (blur edge focus)
+    var4 = img.copy()
+    
+    # Create a mask for the center focus
+    width, height = var4.size
+    mask = Image.new('L', var4.size, 0)
+    draw = ImageDraw.Draw(mask)
+    center_x, center_y = width / 2, height / 2
+    max_radius = min(width, height) / 2
+    
+    # Draw gradient circle
+    for i in range(int(max_radius), 0, -1):
+        opacity = int(255 * (i / max_radius))
+        draw.ellipse(
+            (center_x - i, center_y - i, center_x + i, center_y + i),
+            fill=opacity
+        )
+    
+    # Apply blur based on mask
+    blurred = var4.filter(ImageFilter.GaussianBlur(radius=10))
+    var4 = Image.composite(var4, blurred, mask)
+    
+    var4 = var4.convert('RGB')
+    var4_path = os.path.join(temp_dir, "var4.jpg")
+    var4.save(var4_path)
+    variations.append(var4_path)
+    
+    # Variation 5: Color accent (saturation adjustment)
+    var5 = img.copy()
+    enhancer = ImageEnhance.Color(var5)
+    var5 = enhancer.enhance(1.8)
+    var5 = var5.convert('RGB')
+    var5_path = os.path.join(temp_dir, "var5.jpg")
+    var5.save(var5_path)
+    variations.append(var5_path)
+    
+    return variations
+
+# Add this to main.py to integrate the video generation (unchanged)
+def integrate_video_generation():
+
+    # Add a new section in your UI for video generation
+    if 'analysis_result' in st.session_state and st.session_state.analysis_result:
+        st.header("🎬 Art Journey Video")
+        with st.expander("Generate Video Presentation", expanded=False):
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown("### Generate an engaging video about this artwork")
+                st.markdown("""
+                Our AI will create a video presentation that:
+                - Highlights key aspects of the artwork
+                - Provides visual focus on important details
+                - Creates an engaging art education experience
+                """)
+                
+                if st.button("Generate Art Journey Video"):
+                    with st.spinner("Creating your video... This may take a minute or two."):
+                        try:
+                            # Get required data from session state
+                            analysis = st.session_state.analysis_result
+                            image_data = st.session_state.uploaded_image_data
+                            artwork_type = st.session_state.artwork_type
+                            artist = st.session_state.artist if 'artist' in st.session_state else "Unknown"
+                            title = st.session_state.title if 'title' in st.session_state else "Unknown"
+                            
+                            # Generate the video
+                            video_path = generate_art_video(
+                                image_data,
+                                analysis,
+                                artwork_type,
+                                artist,
+                                title
+                            )
+                            
+                            # Save the path to session state
+                            st.session_state.video_path = video_path
+                            st.session_state.video_generated = True
+                            
+                            st.success("Video generated successfully!")
+                        except Exception as e:
+                            st.error(f"Error generating video: {e}")
+                
+            with col2:
+                st.image("https://via.placeholder.com/300x300?text=Video+Preview", 
+                         caption="AI Video Generation", use_container_width=True)
+            
+            # Display the video if it exists
+            if 'video_generated' in st.session_state and st.session_state.video_generated:
+                st.video(st.session_state.video_path)
+                
+                # Provide download button
+                with open(st.session_state.video_path, "rb") as file:
+                    btn = st.download_button(
+                        label="Download Video",
+                        data=file,
+                        file_name="art_journey.mp4",
+                        mime="video/mp4"
+                    )
 
 # Function to classify artwork type
 def classify_artwork_type(image_data):
@@ -1131,7 +1113,7 @@ def main():
             st.image(image, caption="Uploaded Artwork", use_container_width=True)
             
             # Create tabs for different sections
-            tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis", "🌐 Web Insights", "📈 Visualization", "🔗 Resources"])
+            tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Analysis", "🌐 Web Insights", "📈 Visualization", "🎥 AI Generated Video", "🔗 Resources"])
             
             with st.spinner("Analyzing artwork..."):
                 # Classify artwork type
@@ -1142,6 +1124,14 @@ def main():
                 
                 # Extract artist and title for further searches
                 artist, title, search_terms = extract_artist_and_title(analysis)
+                
+                # Store key data in session state so all tabs can access it
+                st.session_state.analysis_result = analysis
+                st.session_state.uploaded_image_data = image_bytes
+                st.session_state.artwork_type = artwork_type
+                st.session_state.artist = artist
+                st.session_state.title = title
+                st.session_state.search_terms = search_terms
                 
                 # Tab 1: Main Analysis
                 with tab1:
@@ -1177,9 +1167,88 @@ def main():
                     # Display visualization
                     st.pyplot(fig)
                     st.markdown(viz_description)
-                
-                # Tab 4: Resources
+
+                # Tab 4: AI Generated Video
                 with tab4:
+                    st.header("🎬 Art Journey Video")
+                    st.markdown("""
+                    Transform this artwork into an engaging video presentation that highlights key artistic elements and tells its story.
+                    
+                    Our AI will:
+                    - Create a professional video presentation about this artwork
+                    - Highlight key aspects of the artistic style and technique
+                    - Focus on important details through visual enhancements
+                    - Add informative commentary based on the analysis
+                    """)
+                    
+
+                    
+                    # Check if video has already been generated in this session
+                    if 'video_generated' not in st.session_state:
+                        st.session_state.video_generated = False
+                    
+                    # Generate video button
+                    if st.button("Generate Art Journey Video", key="gen_video_btn", type="primary"):
+                        with st.spinner("Creating your video... This may take a minute or two."):
+                            try:
+                                # Make sure we have all required data
+                                if 'uploaded_image_data' not in st.session_state:
+                                    st.error("Please upload an artwork image first.")
+                                elif 'analysis_result' not in st.session_state:
+                                    st.error("Please analyze the artwork before generating a video.")
+                                else:
+                                    # Set default values if not present
+                                    artwork_type = st.session_state.get('artwork_type', "artwork")
+                                    artist = st.session_state.get('artist', "Unknown")
+                                    title = st.session_state.get('title', "Unknown")
+                                    
+                                    # Generate the video using session state data
+                                    video_path = generate_art_video(
+                                        st.session_state.uploaded_image_data,
+                                        st.session_state.analysis_result,
+                                        artwork_type,
+                                        artist,
+                                        title
+                                    )
+                                    
+                                    # Save the path to session state
+                                    st.session_state.video_path = video_path
+                                    st.session_state.video_generated = True
+                                    
+                                    st.success("Video generated successfully!")
+                            except Exception as e:
+                                st.error(f"Error generating video: {str(e)}")
+                                # Show full traceback for debugging
+                                st.exception(e)
+                    
+                    # Display the video if it exists
+                    if st.session_state.video_generated and 'video_path' in st.session_state:
+                        st.subheader("Your Art Journey Video")
+                        st.video(st.session_state.video_path)
+                        
+                        # Provide download button in a cleaner layout
+                        col1, col2, col3 = st.columns([1, 2, 1])
+                        with col2:
+                            try:
+                                with open(st.session_state.video_path, "rb") as file:
+                                    btn = st.download_button(
+                                        label="Download Video",
+                                        data=file,
+                                        file_name="art_journey.mp4",
+                                        mime="video/mp4",
+                                        use_container_width=True
+                                    )
+                            except Exception as e:
+                                st.error(f"Error accessing video file: {str(e)}")
+                        
+                        # Add option to regenerate
+                        st.markdown("---")
+                        if st.button("Generate New Video", key="regen_video_btn"):
+                            st.session_state.video_generated = False
+                            st.rerun()
+                
+                # Tab 5: Resources
+                with tab5:
                     st.markdown("<h2 class='result-header'>Further Resources</h2>", unsafe_allow_html=True)
                     
                     # Get relevant links
