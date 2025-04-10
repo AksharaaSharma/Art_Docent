@@ -144,15 +144,12 @@ links, search_query = get_relevant_links(artist, title, search_terms)
   <table>
     <tr>
       <td width="33%">
-        <img src="https://via.placeholder.com/250x140" alt="Video Type 1"/>
         <p><i>Historical Context</i></p>
       </td>
       <td width="33%">
-        <img src="https://via.placeholder.com/250x140" alt="Video Type 2"/>
         <p><i>Technique Analysis</i></p>
       </td>
       <td width="33%">
-        <img src="https://via.placeholder.com/250x140" alt="Video Type 3"/>
         <p><i>Emotional Journey</i></p>
       </td>
     </tr>
@@ -242,8 +239,5 @@ python deepbrush.py
 
 *Transforming pixels into insights, data into understanding, and static art into cinematic experiences*
 
-<p align="center">
-  <img src="https://via.placeholder.com/800x100" alt="DeepBrush Footer" width="700"/>
-</p>
 
 </div>
