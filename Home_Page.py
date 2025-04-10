@@ -116,10 +116,10 @@ def generate_art_video(image_data, analysis, artwork_type, artist, title):
                 max_pan = max(0, artwork_clip.w - 1080)
                 return ('center', 'center', min(max_pan, max_pan * t / 5))
             
-            artwork_clip = artwork_clip.with_position(pan)
+            artwork_clip = artwork_clip.set_position(pan)
         else:
             # Center the image and add a zoom effect
-            artwork_clip = artwork_clip.with_position('center')
+            artwork_clip = artwork_clip.set_position('center')
             
 
         
