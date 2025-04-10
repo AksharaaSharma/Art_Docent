@@ -29,11 +29,9 @@ DeepBrush transforms how we perceive and understand artistic expression. Using G
   <table>
     <tr>
       <td width="50%">
-        <img src="https://via.placeholder.com/400x225" alt="Video Generation Demo"/>
         <p><i>Immersive art videos automatically generated</i></p>
       </td>
       <td width="50%">
-        <img src="https://via.placeholder.com/400x225" alt="Analysis Demo"/>
         <p><i>Deep artistic analysis with visual insights</i></p>
       </td>
     </tr>
