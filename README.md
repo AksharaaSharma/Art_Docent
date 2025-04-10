@@ -19,7 +19,9 @@
 
 ## ✨ The Canvas of Possibilities
 
-DeepBrush transforms how we perceive and understand artistic expression. Using Google's Gemini 1.5 models, it analyzes paintings, sculptures, drawings, and other art forms with the discerning eye of a seasoned art historian, bringing artworks to life through dynamic visual storytelling.
+DeepBrush transforms how we perceive and understand artistic expression. Using advance LLM models, it analyzes paintings, sculptures, drawings, and other art forms with the discerning eye of a seasoned art historian, bringing artworks to life through dynamic visual storytelling.
+
+Application Link: https://genta-prototype-by-akshara.streamlit.app/
 
 ---
 
