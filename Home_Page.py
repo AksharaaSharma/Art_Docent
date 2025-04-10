@@ -19,7 +19,7 @@ import base64
 from Frontend import frontend
 import tempfile
 import moviepy as mp
-from moviepy import TextClip, ImageClip, CompositeVideoClip, concatenate_videoclips
+from moviepy.editor import TextClip, ImageClip, CompositeVideoClip, concatenate_videoclips
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont
 import traceback
 from moviepy.video.fx import *
