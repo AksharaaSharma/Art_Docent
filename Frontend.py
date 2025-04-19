@@ -1,7 +1,7 @@
 def frontend():
     
     import streamlit as st
-
+    
     st.markdown("""
     <style>
         /* Global Font Settings */
