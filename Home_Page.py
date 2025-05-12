@@ -494,7 +494,7 @@ def classify_artwork_type(image_data):
 logger = logging.getLogger(__name__)
 
 def analyze_artwork(image_data, artwork_type):
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
     prompt = f"""
     You are DeepBrush, an expert art historian and docent with extensive knowledge of {artwork_type}s and art history.
