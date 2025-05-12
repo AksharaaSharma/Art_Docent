@@ -41,10 +41,8 @@ st.set_page_config(
 frontend()
 
 # Gemini API Key
-# Gemini API Key
-GEMINI_API_KEY = "AIzaSyDVh44jf0dulFB1qP8FwnrHb92DY9gBfdU"  # Replace with your API key
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
-
 
 def generate_art_video(image_data, analysis, artwork_type, artist, title):
     try:
