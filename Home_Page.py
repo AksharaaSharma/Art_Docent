@@ -23,6 +23,7 @@ from moviepy.editor import TextClip, ImageClip, CompositeVideoClip, concatenate_
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont
 import traceback
 from moviepy.video.fx import *
+import base64
 
 
 # Configure logging
@@ -471,7 +472,10 @@ def classify_artwork_type(image_data):
     Respond with ONLY the classification word, nothing else. For example: "Painting"
     """
     
-    image_parts = [{"mime_type": "image/jpeg", "data": image_data}]
+    # Base64 encode the image data
+    encoded_image = base64.b64encode(image_data).decode("utf-8")
+    image_parts = [{"mime_type": "image/jpeg", "data": encoded_image}]
+    
     try:
         response = model.generate_content([prompt, image_parts])
         artwork_type = response.text.strip()
