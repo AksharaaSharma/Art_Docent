@@ -454,7 +454,6 @@ def integrate_video_generation():
                         mime="video/mp4"
                     )
 
-# Function to classify artwork type
 def classify_artwork_type(image_data):
     model = genai.GenerativeModel('gemini-1.5-flash')
     
@@ -472,12 +471,15 @@ def classify_artwork_type(image_data):
     Respond with ONLY the classification word, nothing else. For example: "Painting"
     """
     
-    # Base64 encode the image data
-    encoded_image = base64.b64encode(image_data).decode("utf-8")
-    image_parts = [{"mime_type": "image/jpeg", "data": encoded_image}]
-    
     try:
-        response = model.generate_content([prompt, image_parts])
+        response = model.generate_content([
+            prompt, 
+            {
+                "mime_type": "image/jpeg", 
+                "data": base64.b64encode(image_data).decode('utf-8')
+            }
+        ])
+        
         artwork_type = response.text.strip()
         # Ensure it's one of the valid types
         valid_types = ["Drawing", "Painting", "Sculpture", "Engraving", "Iconography", "Mixed Media"]
