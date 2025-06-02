@@ -9,4 +9,3 @@ beautifulsoup4
 numpy
 moviepy
 imageio[ffmpeg]
-moviepy-editor
